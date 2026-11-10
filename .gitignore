@@ -1,0 +1,8 @@
+node_modules
+dist
+.vercel
+.env*
+!.env.example
+# Local content and uploads (production content lives in Vercel Blob)
+data/db.json
+public/uploads

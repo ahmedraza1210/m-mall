@@ -1,0 +1,24 @@
+{
+  "name": "machinery-mall",
+  "version": "1.0.0",
+  "description": "Machinery Mall website with admin panel (React + Vercel)",
+  "scripts": {
+    "dev": "node server/dev.js",
+    "build": "vite build"
+  },
+  "dependencies": {
+    "@vercel/blob": "^2.9.0",
+    "react": "^18.3.1",
+    "react-dom": "^18.3.1",
+    "react-router-dom": "^6.30.6"
+  },
+  "devDependencies": {
+    "@vitejs/plugin-react": "^4.7.0",
+    "vite": "^5.4.21"
+  },
+  "private": true,
+  "type": "module",
+  "engines": {
+    "node": ">=18"
+  }
+}
