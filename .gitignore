@@ -6,3 +6,6 @@ dist
 # Local content and uploads (production content lives in Vercel Blob)
 data/db.json
 public/uploads
+
+# Downloadable archives of the project
+*.zip
