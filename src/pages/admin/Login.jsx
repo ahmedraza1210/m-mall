@@ -1,6 +1,5 @@
 import { useState } from 'react';
 import { api, setToken } from '../../lib/api.js';
-import Logo from '../../components/Logo.jsx';
 
 export default function Login({ onLogin }) {
   const [password, setPassword] = useState('');
@@ -23,11 +22,14 @@ export default function Login({ onLogin }) {
   }
 
   return (
-    <div className="admin-center">
+    <div className="admin-center admin-root">
       <form className="admin-card login-card" onSubmit={submit}>
-        <Logo />
+        <div style={{ display: 'flex', alignItems: 'center', gap: '10px' }}>
+          <img src="/brand/logo-mark.png" alt="" style={{ height: '44px', width: 'auto' }} />
+          <img src="/brand/wordmark.png" alt="Machinery Mall" style={{ height: '20px', width: 'auto' }} />
+        </div>
         <h1>Admin login</h1>
-        <p className="muted">Manage products, case studies and enquiries.</p>
+        <p className="muted">Manage products, industries, case studies, brands and enquiries.</p>
         <label className="field">
           <span>Password</span>
           <input type="password" value={password} onChange={(e) => setPassword(e.target.value)} autoFocus required autoComplete="current-password" />

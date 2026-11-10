@@ -1,82 +1,62 @@
 import { useMemo } from 'react';
-import { useSearchParams } from 'react-router-dom';
+import { Link, useSearchParams } from 'react-router-dom';
 import { useContent } from '../lib/content.jsx';
 import { usePageTitle } from '../lib/format.js';
-import PageHeader from '../components/PageHeader.jsx';
-import { ProductCard } from '../components/Cards.jsx';
-import Icon from '../components/Icon.jsx';
+import PageBand from '../components/PageBand.jsx';
+import { ProductCard } from '../components/ProductCard.jsx';
+import { EnquiryCard } from '../components/EnquiryForms.jsx';
 
+// Product catalogue: machines added in Admin → Products, with photos and full details.
 export default function Products() {
   const { data } = useContent();
-  const { categories, products } = data;
+  const { products, industries } = data;
   const [params, setParams] = useSearchParams();
-  const categorySlug = params.get('category') || '';
-  const q = params.get('q') || '';
-  const active = categories.find((c) => c.slug === categorySlug);
-  usePageTitle(active ? active.name : 'Products');
-
-  const catById = Object.fromEntries(categories.map((c) => [c.id, c]));
-  const results = useMemo(() => {
-    const term = q.trim().toLowerCase();
-    return products.filter((p) => {
-      if (active && p.categoryId !== active.id) return false;
-      if (!term) return true;
-      return [p.name, p.brand, p.model, p.shortDescription, catById[p.categoryId]?.name]
-        .join(' ')
-        .toLowerCase()
-        .includes(term);
-    });
-  }, [products, active, q]); // eslint-disable-line react-hooks/exhaustive-deps
-
-  const update = (key, value) => {
-    const next = new URLSearchParams(params);
-    if (value) next.set(key, value);
-    else next.delete(key);
-    setParams(next, { replace: true });
-  };
+  const industryId = params.get('industry') || '';
+  usePageTitle('Products');
+  const industryById = Object.fromEntries(industries.map((i) => [i.id, i]));
+  const used = industries.filter((i) => products.some((p) => p.industryId === i.id)).sort((a, b) => a.name.localeCompare(b.name));
+  const list = useMemo(() => (industryId ? products.filter((p) => p.industryId === industryId) : products), [products, industryId]);
+  const pick = (id) => setParams(id ? { industry: id } : {}, { replace: true });
 
   return (
     <>
-      <PageHeader
-        title={active ? active.name : 'Our machinery'}
-        subtitle={active?.description || 'New and refurbished equipment for construction, industry and agriculture.'}
-        crumbs={[{ label: 'Products', to: active ? '/products' : undefined }, ...(active ? [{ label: active.name }] : [])]}
-      />
-      <section className="section section--tight">
-        <div className="container">
-          <div className="filters">
-            <div className="chips" role="tablist" aria-label="Categories">
-              <button className={`chip ${!active ? 'is-active' : ''}`} onClick={() => update('category', '')}>
-                All
-              </button>
-              {categories.map((c) => (
-                <button key={c.id} className={`chip ${active?.id === c.id ? 'is-active' : ''}`} onClick={() => update('category', c.slug)}>
-                  {c.name}
-                </button>
-              ))}
-            </div>
-            <label className="search">
-              <Icon name="search" size={18} />
-              <input type="search" placeholder="Search machines, brands, models…" value={q} onChange={(e) => update('q', e.target.value)} />
-            </label>
-          </div>
-          <p className="results-count">
-            {results.length} {results.length === 1 ? 'product' : 'products'}
-          </p>
-          {results.length ? (
-            <div className="card-grid">
-              {results.map((p) => (
-                <ProductCard key={p.id} product={p} category={catById[p.categoryId]} />
-              ))}
-            </div>
-          ) : (
-            <div className="empty">
-              <h3>No machines match your search</h3>
-              <p>Try another category or search term, or contact us — we can source machines that aren't listed.</p>
-            </div>
-          )}
+      <PageBand
+        crumbs={[{ label: 'Products' }]}
+        eyebrow="Products"
+        title="Machines, equipment and complete lines"
+        lead="A selection of the machinery we supply, with photos and specifications. Can’t see what you need? Every industry’s full product range is on the Industries page — and we source beyond it."
+      >
+        <div style={{ display: 'flex', gap: '14px', flexShrink: '0' }}>
+          <Link className="btn btn-out-w" to="/industries">Browse all industries</Link>
         </div>
-      </section>
+      </PageBand>
+      <div style={{ background: 'var(--bg)', padding: '40px 0 48px' }}>
+        <div className="wrap r-stack" style={{ display: 'flex', gap: '30px', alignItems: 'flex-start' }}>
+          <div style={{ flex: '1', minWidth: '0' }}>
+            {used.length > 1 && (
+              <div style={{ display: 'flex', flexWrap: 'wrap', gap: '8px', marginBottom: '20px' }}>
+                <button className={`chip${!industryId ? ' tint' : ''}`} onClick={() => pick('')}>All products</button>
+                {used.map((i) => (
+                  <button key={i.id} className={`chip${industryId === i.id ? ' tint' : ''}`} onClick={() => pick(i.id)}>{i.name}</button>
+                ))}
+              </div>
+            )}
+            {list.length ? (
+              <div className="r-g1" style={{ display: 'grid', gridTemplateColumns: 'repeat(3,minmax(0,1fr))', gap: '16px' }}>
+                {list.map((p) => <ProductCard key={p.id} product={p} industry={industryById[p.industryId]} />)}
+              </div>
+            ) : (
+              <div className="card" style={{ padding: '40px', textAlign: 'center' }}>
+                <h3 className="h4" style={{ marginBottom: '8px' }}>No products listed here yet</h3>
+                <p className="sub">See the full product ranges on the <Link to="/industries">Industries</Link> page, or send us your requirement.</p>
+              </div>
+            )}
+          </div>
+          <div className="r-side" style={{ width: '340px', flexShrink: '0', position: 'sticky', top: '20px' }}>
+            <EnquiryCard source="Products page" />
+          </div>
+        </div>
+      </div>
     </>
   );
 }

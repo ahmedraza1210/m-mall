@@ -3,18 +3,19 @@ import { Link } from 'react-router-dom';
 import { useAdmin } from './AdminApp.jsx';
 import { AdminHeader } from './ui.jsx';
 import Icon from '../../components/Icon.jsx';
-import MachineImage from '../../components/MachineImage.jsx';
+import { Photo } from '../../components/Illustrations.jsx';
 
 export default function ProductsAdmin() {
   const { db, remove, notify, handleError } = useAdmin();
   const [q, setQ] = useState('');
   const [cat, setCat] = useState('');
-  const catById = Object.fromEntries(db.categories.map((c) => [c.id, c]));
+  const indById = Object.fromEntries(db.industries.map((c) => [c.id, c]));
+  const usedIndustries = db.industries.filter((i) => db.products.some((p) => p.industryId === i.id));
   const term = q.trim().toLowerCase();
   const rows = db.products.filter(
     (p) =>
-      (!cat || p.categoryId === cat) &&
-      (!term || [p.name, p.brand, p.model].join(' ').toLowerCase().includes(term))
+      (!cat || p.industryId === cat) &&
+      (!term || [p.name, p.brand, p.model, p.category].join(' ').toLowerCase().includes(term))
   );
 
   async function onDelete(p) {
@@ -29,7 +30,7 @@ export default function ProductsAdmin() {
 
   return (
     <>
-      <AdminHeader title="Products" subtitle="Add machines, upload photos and edit specifications.">
+      <AdminHeader title="Products" subtitle="Machines with photos and full details. They appear on the Products page, inside their industry and in search.">
         <Link to="/admin/products/new" className="btn btn--primary"><Icon name="plus" size={18} /> Add product</Link>
       </AdminHeader>
       <div className="toolbar">
@@ -37,9 +38,9 @@ export default function ProductsAdmin() {
           <Icon name="search" size={18} />
           <input type="search" placeholder="Search products…" value={q} onChange={(e) => setQ(e.target.value)} />
         </label>
-        <select value={cat} onChange={(e) => setCat(e.target.value)} aria-label="Filter by category">
-          <option value="">All categories</option>
-          {db.categories.map((c) => (
+        <select value={cat} onChange={(e) => setCat(e.target.value)} aria-label="Filter by industry">
+          <option value="">All industries</option>
+          {usedIndustries.map((c) => (
             <option key={c.id} value={c.id}>{c.name}</option>
           ))}
         </select>
@@ -55,7 +56,7 @@ export default function ProductsAdmin() {
             <thead>
               <tr>
                 <th>Product</th>
-                <th>Category</th>
+                <th>Industry</th>
                 <th>Photos</th>
                 <th>Status</th>
                 <th aria-label="Actions" />
@@ -66,17 +67,17 @@ export default function ProductsAdmin() {
                 <tr key={p.id}>
                   <td>
                     <Link to={`/admin/products/${p.id}`} className="row-title">
-                      <MachineImage className="thumb" src={p.images?.[0]} alt="" />
+                      <span className="a-thumb"><Photo src={p.images?.[0]} alt="" /></span>
                       <span>
                         <strong>{p.name}</strong>
                         <small className="muted">{[p.brand, p.model].filter(Boolean).join(' · ') || '—'}</small>
                       </span>
                     </Link>
                   </td>
-                  <td>{catById[p.categoryId]?.name || <span className="muted">None</span>}</td>
+                  <td>{indById[p.industryId]?.name || <span className="muted">None</span>}</td>
                   <td>{p.images?.length || <span className="pill pill--warn">0</span>}</td>
                   <td>
-                    {p.featured && <span className="pill pill--accent"><Icon name="star" size={12} /> Featured</span>} {p.availability && <span className="pill">{p.availability}</span>}
+                    {p.featured && <span className="pill pill--accent"><Icon name="star" size={12} /> Featured</span>} 
                   </td>
                   <td className="actions">
                     <a className="icon-btn" href={`/products/${p.slug}`} target="_blank" rel="noreferrer" aria-label="View on site"><Icon name="eye" size={17} /></a>

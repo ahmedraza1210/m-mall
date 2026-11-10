@@ -2,7 +2,7 @@ import { Link } from 'react-router-dom';
 import { useAdmin } from './AdminApp.jsx';
 import { AdminHeader } from './ui.jsx';
 import Icon from '../../components/Icon.jsx';
-import MachineImage from '../../components/MachineImage.jsx';
+import { Photo } from '../../components/Illustrations.jsx';
 
 export default function CaseStudiesAdmin() {
   const { db, remove, notify, handleError } = useAdmin();
@@ -44,14 +44,14 @@ export default function CaseStudiesAdmin() {
                 <tr key={c.id}>
                   <td>
                     <Link to={`/admin/case-studies/${c.id}`} className="row-title">
-                      <MachineImage className="thumb" src={c.images?.[0]} alt="" />
+                      <span className="a-thumb"><Photo src={c.images?.[0]} alt="" kind="plant" /></span>
                       <span>
                         <strong>{c.title}</strong>
                         <small className="muted">{c.client || '—'}</small>
                       </span>
                     </Link>
                   </td>
-                  <td>{c.industry || <span className="muted">—</span>}</td>
+                  <td>{c.facts?.find((f) => f.label.toLowerCase() === 'industry')?.value || <span className="muted">—</span>}</td>
                   <td>{c.productIds?.length || 0}</td>
                   <td>{c.featured && <span className="pill pill--accent"><Icon name="star" size={12} /> Featured</span>}</td>
                   <td className="actions">

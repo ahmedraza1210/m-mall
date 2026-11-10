@@ -57,8 +57,9 @@ export default async function handler(req, res) {
         const index = list.findIndex((x) => x.id === id);
         if (index === -1) throw fail(404, 'Item not found');
         const [gone] = list.splice(index, 1);
-        if (collection === 'categories') {
-          db.products.forEach((p) => p.categoryId === id && (p.categoryId = ''));
+        if (collection === 'industries') {
+          db.products.forEach((p) => p.industryId === id && (p.industryId = ''));
+          db.caseStudies.forEach((c) => c.industryId === id && (c.industryId = ''));
         }
         if (collection === 'products') {
           db.caseStudies.forEach((c) => (c.productIds = (c.productIds || []).filter((pid) => pid !== id)));
@@ -66,7 +67,8 @@ export default async function handler(req, res) {
         return gone;
       });
       // Remove the deleted item's images from storage.
-      await Promise.all([...(removed.images || []), removed.image].filter(Boolean).map(deleteImage));
+      const files = [...(removed.images || []), removed.image, ...(removed.brands || []).map((b) => b.logo), ...(removed.attachments || []).map((a) => a.url)];
+      await Promise.all(files.filter(Boolean).map(deleteImage));
       return send(res, 200, { ok: true });
     }
 

@@ -16,6 +16,8 @@ export const paragraphs = (text) =>
 export function usePageTitle(title) {
   const { siteName = 'Machinery Mall' } = useSettings();
   useEffect(() => {
-    document.title = title ? `${title} | ${siteName}` : siteName;
+    document.title = title ? `${title} — ${siteName}` : `${siteName} — Everything You Need. For Every Industry.`;
   }, [title, siteName]);
 }
+
+export const telHref = (phone) => `tel:${String(phone || '').replace(/[^0-9+]/g, '')}`;

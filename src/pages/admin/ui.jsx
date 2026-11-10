@@ -228,3 +228,43 @@ export function useUnsaved(initial) {
   };
   return { form, set, reset, dirty, setDirty };
 }
+
+/** A textarea that edits a list of strings, one per line. Good for long lists like product types. */
+export function LinesEditor({ value = [], onChange, rows = 6, placeholder }) {
+  const [text, setText] = useState(value.join('\n'));
+  const [last, setLast] = useState(value);
+  if (value !== last) {
+    // Value changed from outside (e.g. a different record was loaded).
+    if (value.join('\n') !== text.split('\n').map((s) => s.trim()).filter(Boolean).join('\n')) setText(value.join('\n'));
+    setLast(value);
+  }
+  return (
+    <textarea
+      rows={rows}
+      placeholder={placeholder}
+      value={text}
+      onChange={(e) => {
+        setText(e.target.value);
+        const next = e.target.value.split('\n').map((s) => s.trim()).filter(Boolean);
+        setLast(next);
+        onChange(next);
+      }}
+    />
+  );
+}
+
+/** Same as LinesEditor but for paragraphs separated by a blank line. */
+export function ParagraphsEditor({ value = [], onChange, rows = 5, placeholder }) {
+  const [text, setText] = useState(value.join('\n\n'));
+  return (
+    <textarea
+      rows={rows}
+      placeholder={placeholder}
+      value={text}
+      onChange={(e) => {
+        setText(e.target.value);
+        onChange(e.target.value.split(/\n\s*\n/).map((s) => s.trim()).filter(Boolean));
+      }}
+    />
+  );
+}

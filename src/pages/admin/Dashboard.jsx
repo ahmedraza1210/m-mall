@@ -3,16 +3,24 @@ import { useAdmin } from './AdminApp.jsx';
 import { AdminHeader } from './ui.jsx';
 import Icon from '../../components/Icon.jsx';
 import { formatDateTime } from '../../lib/format.js';
+import { totalProductTypes } from '../../lib/industries.js';
 
 export default function Dashboard() {
   const { db } = useAdmin();
   const newEnq = db.enquiries.filter((e) => e.status === 'new');
   const noImages = db.products.filter((p) => !p.images?.length);
+  const placeholderBrands = db.brandGroups.flatMap((g) => g.brands).filter((b) => !b.logo).length;
   const cards = [
     { label: 'Products', value: db.products.length, to: '/admin/products', icon: 'box' },
+    { label: 'Industries', value: db.industries.length, to: '/admin/industries', icon: 'tag', sub: `${totalProductTypes(db.industries).toLocaleString('en-US')} product types` },
     { label: 'Case studies', value: db.caseStudies.length, to: '/admin/case-studies', icon: 'file' },
-    { label: 'Categories', value: db.categories.length, to: '/admin/categories', icon: 'tag' },
     { label: 'New enquiries', value: newEnq.length, to: '/admin/enquiries', icon: 'inbox' },
+  ];
+  const todo = [
+    ...(placeholderBrands ? [{ to: '/admin/brands', text: `${placeholderBrands} brand tiles are still placeholders — add brand names and logos` }] : []),
+    ...(!db.settings.hoursWeekdays ? [{ to: '/admin/settings', text: 'Add your shop opening hours' }] : []),
+    ...(!db.settings.mapUrl ? [{ to: '/admin/settings', text: 'Add a Google Maps embed for the Contact page' }] : []),
+    ...noImages.slice(0, 6).map((p) => ({ to: `/admin/products/${p.id}`, text: `Add photos to “${p.name}”` })),
   ];
 
   return (
@@ -27,6 +35,7 @@ export default function Dashboard() {
             <Icon name={c.icon} size={22} />
             <strong>{c.value}</strong>
             <span>{c.label}</span>
+            {c.sub && <small className="muted">{c.sub}</small>}
           </Link>
         ))}
       </div>
@@ -38,14 +47,14 @@ export default function Dashboard() {
           </header>
           <div className="panel__body">
             {db.enquiries.length === 0 ? (
-              <p className="muted">No enquiries yet. Quote requests from the website will appear here.</p>
+              <p className="muted">No enquiries yet. Requirements sent from the website appear here.</p>
             ) : (
               <ul className="simple-list">
                 {db.enquiries.slice(0, 6).map((e) => (
                   <li key={e.id}>
                     <div>
                       <strong>{e.name}</strong> {e.status === 'new' && <span className="pill pill--hot">New</span>}
-                      <p className="muted small">{e.productName || 'General enquiry'} · {formatDateTime(e.createdAt)}</p>
+                      <p className="muted small">{e.productName || e.industry || e.source || 'General enquiry'} · {formatDateTime(e.createdAt)}</p>
                     </div>
                   </li>
                 ))}
@@ -56,20 +65,17 @@ export default function Dashboard() {
         <section className="panel">
           <header className="panel__head"><h2>To do</h2></header>
           <div className="panel__body">
-            {noImages.length === 0 ? (
-              <p className="muted">All products have photos. Nice.</p>
+            {todo.length === 0 ? (
+              <p className="muted">Everything is filled in. Nice.</p>
             ) : (
-              <>
-                <p className="muted small">These products don't have photos yet:</p>
-                <ul className="simple-list">
-                  {noImages.slice(0, 8).map((p) => (
-                    <li key={p.id}>
-                      <Link to={`/admin/products/${p.id}`}>{p.name}</Link>
-                      <Link to={`/admin/products/${p.id}`} className="btn btn--subtle btn--sm"><Icon name="upload" size={14} /> Add photos</Link>
-                    </li>
-                  ))}
-                </ul>
-              </>
+              <ul className="simple-list">
+                {todo.map((t, i) => (
+                  <li key={i}>
+                    <Link to={t.to}>{t.text}</Link>
+                    <Icon name="arrow" size={14} />
+                  </li>
+                ))}
+              </ul>
             )}
           </div>
         </section>

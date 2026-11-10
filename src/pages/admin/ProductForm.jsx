@@ -5,7 +5,7 @@ import { AdminHeader, Field, Panel, PairsEditor, ListEditor, ImageUploader, useU
 import Icon from '../../components/Icon.jsx';
 
 const empty = {
-  name: '', slug: '', categoryId: '', brand: '', model: '', condition: 'New', availability: 'In stock', price: '',
+  name: '', slug: '', industryId: '', category: '', brand: '', model: '', origin: '',
   shortDescription: '', description: '', specs: [], features: [], images: [], brochureUrl: '', videoUrl: '', featured: false,
 };
 
@@ -75,11 +75,11 @@ export default function ProductForm() {
           <Panel title="Basic details">
             <div className="grid-2">
               <Field label="Product name *" wide>
-                <input required {...input('name')} placeholder="e.g. Hydraulic Crawler Excavator 20T" />
+                <input required {...input('name')} placeholder="e.g. Hydraulic Crawler Excavator" />
               </Field>
               <Field label="Brand"><input {...input('brand')} /></Field>
               <Field label="Model"><input {...input('model')} /></Field>
-              <Field label="Short description" hint="Shown on product cards (1–2 sentences)." wide>
+              <Field label="Short description" hint="Shown on product cards and at the top of the product page (1–2 sentences)." wide>
                 <textarea rows={2} {...input('shortDescription')} />
               </Field>
               <Field label="Full description" hint="Leave a blank line between paragraphs." wide>
@@ -88,7 +88,7 @@ export default function ProductForm() {
             </div>
           </Panel>
 
-          <Panel title="Product images" description="The first image is the cover photo. Use the arrows to reorder.">
+          <Panel title="Product images" description="Upload as many photos as you like. The first image is the cover photo; use the arrows to reorder.">
             <ImageUploader value={form.images} onChange={(v) => set('images', v)} onError={handleError} />
           </Panel>
 
@@ -103,28 +103,27 @@ export default function ProductForm() {
 
         <div className="form-cols__side">
           <Panel title="Organise">
-            <Field label="Category">
-              <select {...input('categoryId')}>
-                <option value="">— No category —</option>
-                {db.categories.map((c) => (
+            <Field label="Industry" hint="The product also appears inside this industry on the Industries page.">
+              <select {...input('industryId')}>
+                <option value="">— No industry —</option>
+                {[...db.industries].sort((a, b) => a.name.localeCompare(b.name)).map((c) => (
                   <option key={c.id} value={c.id}>{c.name}</option>
                 ))}
               </select>
             </Field>
-            <Field label="Condition">
-              <input list="conditions" {...input('condition')} />
-              <datalist id="conditions"><option value="New" /><option value="Used" /><option value="Refurbished" /></datalist>
+            <Field label="Category / product range" hint="e.g. Excavation & Earthmoving Machinery">
+              <input list="ranges" {...input('category')} />
+              <datalist id="ranges">
+                {(db.industries.find((i) => i.id === form.industryId)?.groups || []).map((g) => <option key={g.title} value={g.title} />)}
+              </datalist>
             </Field>
-            <Field label="Availability">
-              <input list="availability" {...input('availability')} />
-              <datalist id="availability"><option value="In stock" /><option value="Made to order" /><option value="Coming soon" /><option value="Sold" /></datalist>
-            </Field>
-            <Field label="Price" hint="Leave empty to show “Price on request”.">
-              <input {...input('price')} placeholder="e.g. PKR 12,500,000" />
+            <Field label="Origin" hint="e.g. India, Imported, India / Imported">
+              <input list="origins" {...input('origin')} />
+              <datalist id="origins"><option value="India" /><option value="Imported" /><option value="India / Imported" /></datalist>
             </Field>
             <label className="check">
               <input type="checkbox" checked={form.featured} onChange={(e) => set('featured', e.target.checked)} />
-              <span>Feature on the home page</span>
+              <span>Show in “Featured products” on the home page</span>
             </label>
           </Panel>
           <Panel title="Extras">

@@ -9,11 +9,14 @@ import Login from './Login.jsx';
 import Dashboard from './Dashboard.jsx';
 import ProductsAdmin from './ProductsAdmin.jsx';
 import ProductForm from './ProductForm.jsx';
+import IndustriesAdmin from './IndustriesAdmin.jsx';
+import IndustryForm from './IndustryForm.jsx';
 import CaseStudiesAdmin from './CaseStudiesAdmin.jsx';
 import CaseStudyForm from './CaseStudyForm.jsx';
-import CategoriesAdmin from './CategoriesAdmin.jsx';
+import BrandsAdmin from './BrandsAdmin.jsx';
 import EnquiriesAdmin from './EnquiriesAdmin.jsx';
 import SettingsAdmin from './SettingsAdmin.jsx';
+import '../../admin-base.css';
 import '../../admin.css';
 
 const AdminContext = createContext(null);
@@ -21,11 +24,9 @@ export const useAdmin = () => useContext(AdminContext);
 
 function useToast() {
   const [toast, setToast] = useState(null);
-  const show = useCallback((message, type = 'success') => {
-    setToast({ message, type, id: Date.now() });
-  }, []);
+  const show = useCallback((message, type = 'success') => setToast({ message, type, id: Date.now() }), []);
   useEffect(() => {
-    if (!toast) return;
+    if (!toast) return undefined;
     const t = setTimeout(() => setToast(null), 3500);
     return () => clearTimeout(t);
   }, [toast]);
@@ -80,9 +81,11 @@ export default function AdminApp() {
       await adminApi.remove(collection, id);
       setDb((d) => {
         const next = { ...d, [collection]: d[collection].filter((x) => x.id !== id) };
-        if (collection === 'categories') next.products = d.products.map((p) => (p.categoryId === id ? { ...p, categoryId: '' } : p));
-        if (collection === 'products')
-          next.caseStudies = d.caseStudies.map((c) => ({ ...c, productIds: (c.productIds || []).filter((x) => x !== id) }));
+        if (collection === 'industries') {
+          next.products = d.products.map((p) => (p.industryId === id ? { ...p, industryId: '' } : p));
+          next.caseStudies = d.caseStudies.map((c) => (c.industryId === id ? { ...c, industryId: '' } : c));
+        }
+        if (collection === 'products') next.caseStudies = d.caseStudies.map((c) => ({ ...c, productIds: (c.productIds || []).filter((x) => x !== id) }));
         return next;
       });
       reloadPublic();
@@ -97,10 +100,10 @@ export default function AdminApp() {
     handleError,
   };
 
-  if (!authed) return <Login onLogin={() => setAuthed(true)} />;
+  if (!authed) return <div className="admin-root"><Login onLogin={() => setAuthed(true)} /></div>;
   if (error)
     return (
-      <div className="admin-center">
+      <div className="admin-root admin-center">
         <div className="admin-card">
           <h2>Couldn't load admin data</h2>
           <p>{error}</p>
@@ -114,18 +117,19 @@ export default function AdminApp() {
   const nav = [
     { to: '/admin', label: 'Dashboard', icon: 'grid', end: true },
     { to: '/admin/products', label: 'Products', icon: 'box', count: db.products.length },
+    { to: '/admin/industries', label: 'Industries', icon: 'tag', count: db.industries.length },
     { to: '/admin/case-studies', label: 'Case studies', icon: 'file', count: db.caseStudies.length },
-    { to: '/admin/categories', label: 'Categories', icon: 'tag', count: db.categories.length },
+    { to: '/admin/brands', label: 'Brands', icon: 'star', count: db.brandGroups.reduce((n, g) => n + g.brands.length, 0) },
     { to: '/admin/enquiries', label: 'Enquiries', icon: 'inbox', count: newEnquiries, highlight: newEnquiries > 0 },
     { to: '/admin/settings', label: 'Site settings', icon: 'settings' },
   ];
 
   return (
     <AdminContext.Provider value={{ db, ...actions }}>
-      <div className="admin">
+      <div className="admin admin-root">
         <aside className="admin__sidebar">
           <Link to="/admin" className="admin__brand">
-            <span className="logo__mark"><svg viewBox="0 0 64 64"><path d="M14 46V18h8l10 16 10-16h8v28h-8V32l-10 15-10-15v14z" fill="currentColor" /></svg></span>
+            <span className="logo__mark"><img src="/brand/logo-mark.png" alt="" /></span>
             <span>Admin</span>
           </Link>
           <nav className="admin__nav">
@@ -152,10 +156,13 @@ export default function AdminApp() {
             <Route path="products" element={<ProductsAdmin />} />
             <Route path="products/new" element={<ProductForm />} />
             <Route path="products/:id" element={<ProductForm />} />
+            <Route path="industries" element={<IndustriesAdmin />} />
+            <Route path="industries/new" element={<IndustryForm />} />
+            <Route path="industries/:id" element={<IndustryForm />} />
             <Route path="case-studies" element={<CaseStudiesAdmin />} />
             <Route path="case-studies/new" element={<CaseStudyForm />} />
             <Route path="case-studies/:id" element={<CaseStudyForm />} />
-            <Route path="categories" element={<CategoriesAdmin />} />
+            <Route path="brands" element={<BrandsAdmin />} />
             <Route path="enquiries" element={<EnquiriesAdmin />} />
             <Route path="settings" element={<SettingsAdmin />} />
             <Route path="*" element={<Navigate to="/admin" replace />} />

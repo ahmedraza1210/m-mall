@@ -1,16 +1,15 @@
 import { useEffect, useState } from 'react';
-import MachineImage from './MachineImage.jsx';
-import Icon from './Icon.jsx';
+import { Photo } from './Illustrations.jsx';
 
-export default function Gallery({ images = [], alt }) {
+// Main image with thumbnails and a click-to-enlarge lightbox, in the original card style.
+export default function Gallery({ images = [], alt = '', kind = 'machine', note = '' }) {
   const [active, setActive] = useState(0);
   const [zoom, setZoom] = useState(false);
   useEffect(() => {
     setActive(0);
   }, [images]);
-
   useEffect(() => {
-    if (!zoom) return;
+    if (!zoom) return undefined;
     const onKey = (e) => {
       if (e.key === 'Escape') setZoom(false);
       if (e.key === 'ArrowRight') setActive((i) => (i + 1) % images.length);
@@ -20,22 +19,26 @@ export default function Gallery({ images = [], alt }) {
     return () => window.removeEventListener('keydown', onKey);
   }, [zoom, images.length]);
 
-  if (!images.length) return <MachineImage className="gallery__main" alt={alt} label="Photos coming soon" />;
-
   return (
-    <div className="gallery">
-      <button className="gallery__main-btn" onClick={() => setZoom(true)} aria-label="Enlarge image">
-        <MachineImage className="gallery__main" src={images[active]} alt={alt} />
-      </button>
+    <div>
+      <div className="card gallery-main" style={{ height: '340px', overflow: 'hidden', position: 'relative', background: '#E6ECF2' }}>
+        {images.length ? (
+          <button className="gallery-zoom" onClick={() => setZoom(true)} aria-label="Enlarge image">
+            <img src={images[active]} alt={alt} style={{ width: '100%', height: '100%', objectFit: 'contain', display: 'block' }} />
+          </button>
+        ) : (
+          <Photo kind={kind} style={{ background: '#E6ECF2' }} />
+        )}
+        {note && (
+          <div style={{ position: 'absolute', bottom: '14px', right: '16px' }}>
+            <span className="tiny">{note}</span>
+          </div>
+        )}
+      </div>
       {images.length > 1 && (
-        <div className="gallery__thumbs">
+        <div style={{ display: 'grid', gridTemplateColumns: 'repeat(auto-fill,minmax(78px,1fr))', gap: '10px', marginTop: '12px' }}>
           {images.map((src, i) => (
-            <button
-              key={src}
-              className={`gallery__thumb ${i === active ? 'is-active' : ''}`}
-              onClick={() => setActive(i)}
-              aria-label={`Show image ${i + 1}`}
-            >
+            <button key={src} className={`thumb${i === active ? ' on' : ''}`} onClick={() => setActive(i)} aria-label={`Show image ${i + 1}`}>
               <img src={src} alt="" loading="lazy" />
             </button>
           ))}
@@ -43,9 +46,6 @@ export default function Gallery({ images = [], alt }) {
       )}
       {zoom && (
         <div className="lightbox" onClick={() => setZoom(false)} role="dialog" aria-modal="true">
-          <button className="lightbox__close" aria-label="Close">
-            <Icon name="close" size={28} />
-          </button>
           <img src={images[active]} alt={alt} onClick={(e) => e.stopPropagation()} />
         </div>
       )}

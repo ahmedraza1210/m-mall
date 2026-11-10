@@ -12,7 +12,7 @@ const STATUSES = [
 ];
 
 function toCsv(rows) {
-  const cols = ['createdAt', 'name', 'company', 'phone', 'email', 'productName', 'message', 'status', 'notes'];
+  const cols = ['createdAt', 'name', 'company', 'phone', 'email', 'region', 'industry', 'productName', 'source', 'message', 'status', 'notes'];
   const esc = (v) => `"${String(v ?? '').replace(/"/g, '""')}"`;
   return [cols.join(','), ...rows.map((r) => cols.map((c) => esc(r[c])).join(','))].join('\n');
 }
@@ -54,7 +54,7 @@ export default function EnquiriesAdmin() {
 
   return (
     <>
-      <AdminHeader title="Enquiries" subtitle="Quote requests and messages from the website.">
+      <AdminHeader title="Enquiries" subtitle="Requirements sent from the website forms, with any attached photos or datasheets.">
         {db.enquiries.length > 0 && <button className="btn btn--outline" onClick={exportCsv}>Export CSV</button>}
       </AdminHeader>
       <div className="chips chips--spaced">
@@ -83,7 +83,7 @@ export default function EnquiriesAdmin() {
                     <strong>{e.name}</strong>
                     {e.company && <small className="muted"> · {e.company}</small>}
                   </span>
-                  <span className="enquiry__what muted">{e.productName || 'General enquiry'}</span>
+                  <span className="enquiry__what muted">{e.productName || e.industry || e.source || 'General enquiry'}</span>
                   <span className="enquiry__when muted small">{formatDateTime(e.createdAt)}</span>
                 </button>
                 {isOpen && (
@@ -96,7 +96,19 @@ export default function EnquiriesAdmin() {
                       )}
                       {product && <Link to={`/admin/products/${product.id}`}><Icon name="box" size={15} /> {product.name}</Link>}
                     </div>
+                    {(e.region || e.industry || e.source) && (
+                      <p className="muted small" style={{ margin: 0 }}>
+                        {[e.region && `Region: ${e.region}`, e.industry && `Industry: ${e.industry}`, e.source && `Sent from: ${e.source}`].filter(Boolean).join(' · ')}
+                      </p>
+                    )}
                     <p className="enquiry__message">{e.message}</p>
+                    {e.attachments?.length > 0 && (
+                      <div className="attachments">
+                        {e.attachments.map((a) => (
+                          <a key={a.url} href={a.url} target="_blank" rel="noreferrer"><Icon name="file" size={15} /> {a.name}</a>
+                        ))}
+                      </div>
+                    )}
                     <NotesEditor enquiry={e} onSave={(notes) => update(e, { notes })} />
                     <div className="enquiry__actions">
                       <label>
