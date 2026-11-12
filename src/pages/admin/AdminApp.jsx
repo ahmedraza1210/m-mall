@@ -1,5 +1,5 @@
-import { createContext, useCallback, useContext, useEffect, useState } from 'react';
-import { Routes, Route, NavLink, Navigate, Link } from 'react-router-dom';
+import { createContext, useCallback, useContext, useEffect, useRef, useState } from 'react';
+import { Routes, Route, NavLink, Navigate, Link, useLocation } from 'react-router-dom';
 import { adminApi, getToken, setToken } from '../../lib/api.js';
 import { useContent } from '../../lib/content.jsx';
 import { usePageTitle } from '../../lib/format.js';
@@ -45,6 +45,7 @@ export default function AdminApp() {
     setToken('');
     setAuthed(false);
     setDb(null);
+    loadedOnce.current = false;
   }, []);
 
   const handleError = useCallback(
@@ -55,16 +56,47 @@ export default function AdminApp() {
     [logout, notify]
   );
 
-  useEffect(() => {
-    if (!authed) return;
-    adminApi
-      .load()
-      .then(setDb)
-      .catch((err) => {
+  const lastLoad = useRef(0);
+  const loadedOnce = useRef(false);
+  const location = useLocation();
+
+  const refresh = useCallback(
+    async ({ quiet = true } = {}) => {
+      lastLoad.current = Date.now();
+      try {
+        const fresh = await adminApi.load();
+        setDb(fresh);
+        loadedOnce.current = true;
+        if (!quiet) notify('Updated');
+      } catch (err) {
         if (err.status === 401) logout();
-        else setError(err.message);
-      });
-  }, [authed, logout]);
+        else if (!loadedOnce.current) setError(err.message); // first load failed: show the error screen
+        else if (!quiet) notify(err.message, 'error'); // later background refreshes fail silently
+      }
+    },
+    [logout, notify]
+  );
+
+  useEffect(() => {
+    if (authed) refresh();
+  }, [authed, refresh]);
+
+  // New enquiries arrive while the admin is open: reload when opening the
+  // dashboard or enquiries, and when coming back to this browser tab.
+  useEffect(() => {
+    if (!authed || !db) return;
+    const p = location.pathname.replace(/\/$/, '');
+    if ((p === '/admin' || p === '/admin/enquiries') && Date.now() - lastLoad.current > 5000) refresh();
+  }, [location.pathname]); // eslint-disable-line react-hooks/exhaustive-deps
+
+  useEffect(() => {
+    if (!authed) return undefined;
+    const onVisible = () => {
+      if (document.visibilityState === 'visible' && Date.now() - lastLoad.current > 30000) refresh();
+    };
+    document.addEventListener('visibilitychange', onVisible);
+    return () => document.removeEventListener('visibilitychange', onVisible);
+  }, [authed, refresh]);
 
   const actions = {
     async save(collection, item) {
@@ -98,6 +130,7 @@ export default function AdminApp() {
     },
     notify,
     handleError,
+    refresh,
   };
 
   if (!authed) return <div className="admin-root"><Login onLogin={() => setAuthed(true)} /></div>;

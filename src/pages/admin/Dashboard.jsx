@@ -6,7 +6,7 @@ import { formatDateTime } from '../../lib/format.js';
 import { totalProductTypes } from '../../lib/industries.js';
 
 export default function Dashboard() {
-  const { db } = useAdmin();
+  const { db, refresh } = useAdmin();
   const newEnq = db.enquiries.filter((e) => e.status === 'new');
   const noImages = db.products.filter((p) => !p.images?.length);
   const placeholderBrands = db.brandGroups.flatMap((g) => g.brands).filter((b) => !b.logo).length;
@@ -43,7 +43,10 @@ export default function Dashboard() {
         <section className="panel">
           <header className="panel__head panel__head--row">
             <h2>Latest enquiries</h2>
-            <Link to="/admin/enquiries" className="link-arrow">View all <Icon name="arrow" size={14} /></Link>
+            <span style={{ display: 'flex', gap: '14px' }}>
+              <button type="button" className="link-arrow" style={{ background: 'none', border: 0, cursor: 'pointer', padding: 0 }} onClick={() => refresh({ quiet: false })}>Refresh</button>
+              <Link to="/admin/enquiries" className="link-arrow">View all <Icon name="arrow" size={14} /></Link>
+            </span>
           </header>
           <div className="panel__body">
             {db.enquiries.length === 0 ? (

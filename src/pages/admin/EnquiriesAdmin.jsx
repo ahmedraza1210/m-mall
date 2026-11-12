@@ -18,7 +18,8 @@ function toCsv(rows) {
 }
 
 export default function EnquiriesAdmin() {
-  const { db, save, remove, notify, handleError } = useAdmin();
+  const { db, save, remove, notify, handleError, refresh } = useAdmin();
+  const [loading, setLoading] = useState(false);
   const [filter, setFilter] = useState('');
   const [open, setOpen] = useState(null);
   const rows = filter ? db.enquiries.filter((e) => e.status === filter) : db.enquiries;
@@ -55,6 +56,9 @@ export default function EnquiriesAdmin() {
   return (
     <>
       <AdminHeader title="Enquiries" subtitle="Requirements sent from the website forms, with any attached photos or datasheets.">
+        <button className="btn btn--outline" disabled={loading} onClick={async () => { setLoading(true); await refresh({ quiet: false }); setLoading(false); }}>
+          {loading ? 'Refreshing…' : 'Refresh'}
+        </button>
         {db.enquiries.length > 0 && <button className="btn btn--outline" onClick={exportCsv}>Export CSV</button>}
       </AdminHeader>
       <div className="chips chips--spaced">
