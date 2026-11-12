@@ -64,7 +64,7 @@ export default async function handler(req, res) {
     await updateDb((db) => {
       db.enquiries.unshift(enquiry);
       db.enquiries = db.enquiries.slice(0, 3000);
-    });
+    }, { part: 'enquiries' });
     send(res, 200, { ok: true });
   } catch (err) {
     handleError(res, err);

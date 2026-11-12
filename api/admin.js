@@ -14,7 +14,7 @@ export default async function handler(req, res) {
   if (!isAdmin(req)) return send(res, 401, { error: 'Please log in again.' });
   res.setHeader('Cache-Control', 'no-store');
   try {
-    if (req.method === 'GET') return send(res, 200, await readDb());
+    if (req.method === 'GET') return send(res, 200, await readDb({ enquiries: true }));
     if (req.method !== 'POST') return send(res, 405, { error: 'Method not allowed' });
 
     const { action, collection, item, id, settings } = body(req);
@@ -29,6 +29,7 @@ export default async function handler(req, res) {
 
     const def = COLLECTIONS[collection];
     if (!def) throw fail(400, 'Unknown collection');
+    const part = collection === 'enquiries' ? 'enquiries' : 'content';
 
     if (action === 'save') {
       if (!item || typeof item !== 'object') throw fail(400, 'Missing item');
@@ -47,7 +48,7 @@ export default async function handler(req, res) {
         if (index >= 0) list[index] = record;
         else list.unshift(record);
         return record;
-      });
+      }, { part });
       return send(res, 200, { item: saved });
     }
 
@@ -65,7 +66,7 @@ export default async function handler(req, res) {
           db.caseStudies.forEach((c) => (c.productIds = (c.productIds || []).filter((pid) => pid !== id)));
         }
         return gone;
-      });
+      }, { part });
       // Remove the deleted item's images from storage.
       const files = [...(removed.images || []), removed.image, ...(removed.brands || []).map((b) => b.logo), ...(removed.attachments || []).map((a) => a.url)];
       await Promise.all(files.filter(Boolean).map(deleteImage));

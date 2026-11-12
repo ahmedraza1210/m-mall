@@ -6,8 +6,8 @@ The design is the original one: the same CSS, colours (blue #0071BC, red #E01B22
 
 There is **no separate database**. All content is stored on Vercel itself:
 
-- **On Vercel:** content is one JSON file in **Vercel Blob** (Vercel's built-in file storage), and uploaded images are stored there too.
-- **On your computer:** content is saved to `data/db.json` and images to `public/uploads/`.
+- **On Vercel:** content is stored in **Vercel Blob** (Vercel's built-in file storage): one file for the website content, a separate privately named file for customer enquiries, and the uploaded images.
+- **On your computer:** content is saved to `data/content.json` and `data/enquiries.json`, and images to `public/uploads/`.
 
 ## Run it locally
 
@@ -27,7 +27,7 @@ Open http://localhost:5173. The admin panel is at http://localhost:5173/admin an
 3. In the project's **Settings → Environment Variables**, add:
    - `ADMIN_PASSWORD`: the password for `/admin` (required).
    - `ADMIN_SECRET`: optional. Any long random string; it is used to sign admin logins.
-4. Open the project's **Storage** tab, choose **Create → Blob**, and select **Public** access. Connect it to the project. Vercel adds `BLOB_READ_WRITE_TOKEN` automatically.
+4. Open the project's **Storage** tab, choose **Create → Blob**, and select **Public** access. Connect it to the project with the Production environment ticked. Vercel adds the storage credentials automatically (a `BLOB_STORE_ID` for OIDC, or `BLOB_READ_WRITE_TOKEN`); both work.
 5. **Redeploy** so the new settings take effect (Deployments → ⋯ → Redeploy).
 
 Then open `https://your-site.vercel.app/admin` and log in.
@@ -93,5 +93,6 @@ src/            React app
 ## Notes
 
 - **Changing the starter content.** Edit `lib/seed.js`. The starter content is only used until the first save; after that the saved content is used.
-- **Backups.** In the Vercel dashboard, open Storage → your Blob store and download the file under `machinery-mall/data/`. It contains all your content.
+- **Backups.** In the Vercel dashboard, open Storage → your Blob store → Manage Blobs. `machinery-mall/data/content.json` holds the website content and `machinery-mall/private/enquiries-….json` holds the enquiries.
+- **Changes on the live site** appear within about a minute of saving in the admin (the public pages are cached briefly to keep the site fast and within Vercel's free limits).
 - **Simultaneous edits.** This setup is designed for a small team of admins. If two people save at the same moment, the later save wins.

@@ -5,12 +5,12 @@ import { send, handleError } from '../lib/http.js';
 export default async function handler(req, res) {
   if (req.method !== 'GET') return send(res, 405, { error: 'Method not allowed' });
   try {
-    const { settings, industries, products, caseStudies, brandGroups } = await readDb();
+    const { settings, industries, products, caseStudies, brandGroups } = await readDb({ fresh: false });
     send(
       res,
       200,
       { settings, industries, products, caseStudies, brandGroups },
-      { 'Cache-Control': 'public, max-age=0, s-maxage=5, stale-while-revalidate=30' }
+      { 'Cache-Control': 'public, max-age=0, s-maxage=30, stale-while-revalidate=300' }
     );
   } catch (err) {
     handleError(res, err);
